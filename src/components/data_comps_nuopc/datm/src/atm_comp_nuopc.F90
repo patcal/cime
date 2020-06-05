@@ -342,7 +342,8 @@ contains
     if (masterproc) write(logunit,*) ' datm datamode = ',trim(datamode)
     if (trim(datamode) == 'NULL'      .or. trim(datamode) == 'CORE2_NYF'    .or. &
         trim(datamode) == 'CORE2_IAF' .or. trim(datamode) == 'CORE_IAF_JRA' .or. &
-        trim(datamode) == 'CLMNCEP'   .or. trim(datamode) == 'COPYALL') then
+        trim(datamode) == 'CLMNCEP'   .or. trim(datamode) == 'ERA5' .or. &
+        trim(datamode) == 'COPYALL') then
     else
        call shr_sys_abort(' ERROR illegal datm datamode = '//trim(datamode))
     endif
