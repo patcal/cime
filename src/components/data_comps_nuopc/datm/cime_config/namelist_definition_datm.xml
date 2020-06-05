@@ -202,6 +202,7 @@
       <value datm_mode="CORE_IAF_JRA" >CORE_IAF_JRA.PREC,CORE_IAF_JRA.LWDN,CORE_IAF_JRA.SWDN,CORE_IAF_JRA.Q_10,CORE_IAF_JRA.SLP_,CORE_IAF_JRA.T_10,CORE_IAF_JRA.U_10,CORE_IAF_JRA.V_10,CORE_IAF_JRA.CORE2.ArcFactor</value>
       <value datm_mode="CORE2_IAF" atm_grid="01col" >CORE2_IAF.NCEP.DENS.SOFS,CORE2_IAF.NCEP.PSLV.SOFS,CORE2_IAF.PREC.SOFS.DAILY,CORE2_IAF.LWDN.SOFS.DAILY,CORE2_IAF.SWDN.SOFS.DAILY,CORE2_IAF.SWUP.SOFS.DAILY,CORE2_IAF.SHUM.SOFS.6HOUR,CORE2_IAF.TBOT.SOFS.6HOUR,CORE2_IAF.U.SOFS.6HOUR,CORE2_IAF.V.SOFS.6HOUR,CORE2_IAF.CORE2.ArcFactor</value>
       <value datm_mode="CPLHIST">CPLHISTForcing.Solar,CPLHISTForcing.nonSolarFlux,CPLHISTForcing.State3hr,CPLHISTForcing.State1hr</value>
+      <value datm_mode="ERA5">ERA5_HOURLY</value>
     </values>
   </entry>
 
@@ -269,6 +270,7 @@
       <value stream="presaero.SSP">$DIN_LOC_ROOT/atm/cam/chem/trop_mozart_aero/aero</value>
       <value stream="topo.observed">$DIN_LOC_ROOT/atm/datm7/topo_forcing</value>
       <value stream="topo.cplhist">null</value>
+      <value stream="ERA5_HOURLY">$DIN_LOC_ROOT/hafs/share/domains</value>
     </values>
   </entry>
 
@@ -372,6 +374,7 @@
       <value stream="presaero.SSP5-8.5">aerodep_clm_SSP585_b.e21.BSSP585cmip6.f09_g17.CMIP6-SSP5-8.5.001_2014-2101_monthly_0.9x1.25_c190419.nc</value>
       <value stream="topo.observed">topodata_0.9x1.25_USGS_070110_stream_c151201.nc</value>
       <value stream="topo.cplhist">null</value>
+      <value stream="ERA5_HOURLY">domain.lnd.TL639_Atlantic8.200604.nc</value>
     </values>
   </entry>
 
@@ -485,6 +488,7 @@
       <value stream="presaero">$DIN_LOC_ROOT/atm/cam/chem/trop_mozart_aero/aero</value>
       <value stream="topo.observed">$DIN_LOC_ROOT/atm/datm7/topo_forcing</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_DIR</value>
+      <value stream="ERA5_HOURLY">/glade/scratch/turuncu/inputdata/atm/datm8/ERA5</value>
     </values>
   </entry>
 
@@ -1745,6 +1749,10 @@
       <value stream="presaero.SSP5-3.4">null</value>
       <value stream="presaero.SSP5-8.5">aerodep_clm_SSP585_b.e21.BSSP585cmip6.f09_g17.CMIP6-SSP5-8.5.001_2014-2101_monthly_0.9x1.25_c190419.nc</value>
       <value stream="topo.observed">topodata_0.9x1.25_USGS_070110_stream_c151201.nc</value>
+      <value stream="ERA5_HOURLY">
+        ERA5.TL639.2019.01.050620.nc
+        ERA5.TL639.2019.02.050620.nc
+      </value>
     </values>
   </entry>
 
@@ -2095,6 +2103,20 @@
       <value stream="topo.observed">
         TOPO topo
       </value>
+      <value stream="ERA5_HOURLY">
+        u10   u
+        v10   v
+        t2m   tbot
+        d2m   tdew
+        msl   pslv
+        sp    pbot
+        cp    rainc
+        lsp   rainl
+        csf   snowc
+        lsf   snowl
+        ssrd  swdn
+        strd  lwdn
+      </value>
     </values>
   </entry>
 
@@ -2133,6 +2155,8 @@
       <value stream="presaero.SSP">2015</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_ALIGN</value>
+
+      <value stream="ERA5_HOURLY">1900</value>
     </values>
   </entry>
 
@@ -2201,6 +2225,7 @@
       <value stream="presaero.SSP">2015</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_START</value>
+      <value stream="ERA5_HOURLY">1900</value>
     </values									>
   </entry>
 
@@ -2272,6 +2297,7 @@
       <value stream="presaero.SSP">2101</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_END</value>
+      <value stream="ERA5_HOURLY">2020</value>
     </values>
   </entry>
 
@@ -2543,6 +2569,7 @@
       <value datm_mode="CORE2_NYF">u:v</value>
       <value datm_mode="CORE2_IAF">u:v</value>
       <value datm_mode="CORE_IAF_JRA">u:v</value>
+      <value datm_mode="ERA5">u:v</value>
     </values>
   </entry>
 
@@ -2573,7 +2600,7 @@
     <type>char</type>
     <category>datm</category>
     <group>datm_nml</group>
-    <valid_values>CLMNCEP,COPYALL,CORE2_NYF,CORE2_IAF,CORE_IAF_JRA,NULL</valid_values>
+    <valid_values>CLMNCEP,COPYALL,CORE2_NYF,CORE2_IAF,CORE_IAF_JRA,ERA5,NULL</valid_values>
     <desc>
       general method that operates on the data.  this is generally
       implemented in the data models but is set in the strdata method for
@@ -2626,6 +2653,7 @@
       <value datm_mode="CORE2_IAF">CORE2_IAF</value>
       <value datm_mode="CORE_IAF_JRA">CORE_IAF_JRA</value>
       <value datm_mode="CPLHIST">COPYALL</value>
+      <value datm_mode="ERA5">ERA5</value>
     </values>
   </entry>
 

@@ -1536,6 +1536,9 @@ contains
 
        end do
 
+    case('ERA5')
+       ! do nothing extra
+
     end select
 
     !----------------------------------------------------------
