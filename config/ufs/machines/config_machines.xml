@@ -110,7 +110,7 @@ This allows using a different mpirun command to launch unit tests
 	<command name="load">cmake</command>
       </modules>
       <modules compiler="intel">
-	<command name="load">intel/19.0.5</command>
+        <command name="load">intel/19.0.2</command>
 	<command name="load">mkl</command>
       </modules>
       <modules compiler="gnu">
@@ -127,9 +127,9 @@ This allows using a different mpirun command to launch unit tests
 	<command name="load">pnetcdf/1.12.1</command>
       </modules>
       <modules mpilib="impi" compiler="intel">
-        <command name="load">impi/2019.6.154</command>
-        <command name="load">netcdf/4.7.3</command>
-        <command name="load">pnetcdf/1.12.1</command>
+        <command name="load">impi/2019.2.187</command>
+        <command name="load">netcdf-mpi/4.6.3</command>
+        <command name="load">pnetcdf/1.11.1</command>
       </modules>
       <modules>
 	<command name="load">ncarcompilers/0.5.0</command>
