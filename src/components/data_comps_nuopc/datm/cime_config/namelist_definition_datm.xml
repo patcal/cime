@@ -244,6 +244,9 @@
       <value datm_mode="CPLHIST">
 	CPLHISTForcing.Solar,CPLHISTForcing.nonSolarFlux,CPLHISTForcing.State3hr,CPLHISTForcing.State1hr
       </value>
+      <value datm_mode="ERA5">
+        ERA5_HOURLY
+      </value>
     </values>
   </entry>
 
@@ -409,6 +412,9 @@
       </value>
       <value datm_mode="CORE2_IAF" atm_grid="01col">
 	<!-- TODO: generate_mesh_from:$DIN_LOC_ROOT/domains/domain.ocn.01col.SOFS.20150828.nc -->
+      </value>
+      <value stream="ERA5_HOURLY">
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/TL639_200609_ESMFmesh.nc
       </value>
     </values>
   </entry>
@@ -1821,6 +1827,20 @@
       <value stream="topo.observed">
 	$DIN_LOC_ROOT/atm/datm7/topo_forcing/topodata_0.9x1.25_USGS_070110_stream_c151201.nc
       </value>
+      <value stream="ERA5_HOURLY">
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.01.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.02.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.03.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.04.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.05.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.06.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.07.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.08.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.09.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.10.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.11.200609.nc
+        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.12.200609.nc
+      </value>      
     </values>
   </entry>
 
@@ -2171,7 +2191,23 @@
       <value stream="topo.observed">
         TOPO Sa_topo
       </value>
-
+      <!-- ===================       -->
+      <!-- datamode ERA5_ERA5_HOURLY -->
+      <!-- ===================       -->
+      <value stream="ERA5_HOURLY">
+        u10   Sa_u
+        v10   Sa_v
+        t2m   Sa_tbot
+        d2m   Sa_tdew
+        msl   Sa_pslv
+        sp    Sa_pbot
+        cp    Faxa_rainc
+        lsp   Faxa_rainl
+        csf   Faxa_snowc
+        lsf   Faxa_snowl
+        ssrd  Faxa_swdn
+        strd  Faxa_lwdn
+      </value>
     </values>
   </entry>
 
@@ -2205,6 +2241,7 @@
       <value stream="presaero.SSP">2015</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_ALIGN</value>
+      <value stream="ERA5_HOURLY">1900</value>
     </values>
   </entry>
 
@@ -2267,6 +2304,7 @@
       <value stream="presaero.SSP">2015</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_START</value>
+      <value stream="ERA5_HOURLY">2019</value>
     </values									>
   </entry>
 
@@ -2330,6 +2368,7 @@
       <value stream="presaero.SSP">2101</value>
       <value stream="topo.observed">1</value>
       <value stream="topo.cplhist">$DATM_CPLHIST_YR_END</value>
+      <value stream="ERA5_HOURLY">2019</value>
     </values>
   </entry>
 
@@ -2530,6 +2569,7 @@
       <value datm_mode="CORE2_NYF">u:v</value>
       <value datm_mode="CORE2_IAF">u:v</value>
       <value datm_mode="CORE_IAF_JRA">u:v</value>
+      <value datm_mode="ERA5">u:v</value>
     </values>
   </entry>
 
@@ -2560,7 +2600,7 @@
     <type>char</type>
     <category>datm</category>
     <group>datm_nml</group>
-    <valid_values>CLMNCEP,COPYALL,CORE2_NYF,CORE2_IAF,CORE_IAF_JRA,NULL</valid_values>
+    <valid_values>CLMNCEP,COPYALL,CORE2_NYF,CORE2_IAF,CORE_IAF_JRA,ERA5,NULL</valid_values>
     <desc>
       general method that operates on the data.  this is generally
       implemented in the data models but is set in the strdata method for
@@ -2605,6 +2645,8 @@
       mode replicates code previously found in CLM (circa 2005), before the
       LMWG started using the CCSM flux coupler and data models to do
       active-land-only simulations.
+      datamode = "ERA5"
+      Fifth generation ECMWF atmospheric reanalysis of the global climate
     </desc>
     <values>
       <value>NULL</value>
@@ -2613,6 +2655,7 @@
       <value datm_mode="CORE2_IAF">CORE2_IAF</value>
       <value datm_mode="CORE_IAF_JRA">CORE_IAF_JRA</value>
       <value datm_mode="CPLHIST">COPYALL</value>
+      <value datm_mode="ERA5">ERA5</value>
     </values>
   </entry>
 
