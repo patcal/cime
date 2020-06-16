@@ -2201,12 +2201,17 @@
         d2m   Sa_tdew
         msl   Sa_pslv
         sp    Sa_pbot
+        tp    Faxa_rain
         cp    Faxa_rainc
         lsp   Faxa_rainl
         csf   Faxa_snowc
         lsf   Faxa_snowl
         ssrd  Faxa_swdn
         strd  Faxa_lwdn
+        aluvp Faxa_swvdr
+        aluvd Faxa_swvdf
+        alnip Faxa_swndr
+        alnid Faxa_swndf
       </value>
     </values>
   </entry>
