@@ -45,6 +45,8 @@ module datm_datamode_era5_mod
   real(r8), pointer :: Faxa_swvdf(:)        => null()
   real(r8), pointer :: Faxa_swnet(:)        => null()
   real(r8), pointer :: Faxa_swdn(:)         => null()
+  real(r8), pointer :: Faxa_sen(:)          => null()
+  real(r8), pointer :: Faxa_lat(:)          => null()
 
   ! stream data
   real(r8), pointer :: strm_tdew(:)      => null()
@@ -103,6 +105,8 @@ contains
     call dshr_fldList_add(fldsExport, 'Faxa_swnet' )
     call dshr_fldList_add(fldsExport, 'Faxa_lwdn'  )
     call dshr_fldList_add(fldsExport, 'Faxa_swdn'  )
+    call dshr_fldList_add(fldsExport, 'Faxa_sen'  )
+    call dshr_fldList_add(fldsExport, 'Faxa_lat'  )
 
     fldlist => fldsExport ! the head of the linked list
     do while (associated(fldlist))
@@ -169,6 +173,10 @@ contains
     call dshr_state_getfldptr(exportState, 'Faxa_swdn'  , fldptr1=Faxa_swdn  , rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
     call dshr_state_getfldptr(exportState, 'Faxa_lwdn'  , fldptr1=Faxa_lwdn  , rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call dshr_state_getfldptr(exportState, 'Faxa_sen'   , fldptr1=Faxa_sen   , rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call dshr_state_getfldptr(exportState, 'Faxa_lat'   , fldptr1=Faxa_lat   , rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
   end subroutine datm_datamode_era5_init_pointers
@@ -267,6 +275,8 @@ contains
     Faxa_swvdf(:) = Faxa_swvdf(:)/3600.0_r8
     Faxa_swndf(:) = Faxa_swndf(:)/3600.0_r8
     Faxa_swnet(:) = Faxa_swnet(:)/3600.0_r8
+    Faxa_sen(:) = Faxa_sen(:)/3600.0_r8
+    Faxa_lat(:) = Faxa_lat(:)/3600.0_r8
 
     ! convert m to kg/m^2/s
     Faxa_rain(:) = Faxa_rain(:)/3600.0_r8*rhofw
