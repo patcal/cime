@@ -2214,6 +2214,8 @@
         alnid Faxa_swndf
         sshf  Faxa_sen
         slhf  Faxa_lat
+        ewss  Faxa_taux
+        nsss  Faxa_tauy
       </value>
     </values>
   </entry>
@@ -2576,7 +2578,7 @@
       <value datm_mode="CORE2_NYF">u:v</value>
       <value datm_mode="CORE2_IAF">u:v</value>
       <value datm_mode="CORE_IAF_JRA">u:v</value>
-      <value datm_mode="ERA5">u:v</value>
+      <value datm_mode="ERA5">u:v,taux:tauy</value>
     </values>
   </entry>
 
