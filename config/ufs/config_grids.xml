@@ -122,9 +122,9 @@
 
     <domain name="TL639">
       <nx>1440</nx> <ny>721</ny>
-      <file grid="atm|lnd" mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.lnd.TL639_Atlantic8.200609.nc</file>
-      <file grid="ocnice"  mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.TL639_Atlantic8.200609.nc</file>
-      <mesh driver="nuopc">/glade/scratch/turuncu/inputdata/share/meshes/TL639_200609_ESMFmesh.nc</mesh>
+      <file grid="atm|lnd" mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.lnd.TL639_Atlantic8.200617.nc</file>
+      <file grid="ocnice"  mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.TL639_Atlantic8.200617.nc</file>
+      <mesh driver="nuopc">/glade/scratch/turuncu/inputdata/share/meshes/TL639_200617_ESMFmesh.nc</mesh>
       <desc>TL639 grid for ERA5</desc>
     </domain>
 
