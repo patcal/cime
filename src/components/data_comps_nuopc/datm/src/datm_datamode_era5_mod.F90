@@ -226,14 +226,12 @@ contains
        ! determine tbotmax (see below for use)
        rtmp = maxval(Sa_tbot(:))
        call shr_mpi_max(rtmp, tbotmax, mpicom, 'datm_tbot', all=.true.)
-       write(logunit,*) trim(subname),' tbotmax = ',tbotmax
+       if (masterproc) write(logunit,*) trim(subname),' tbotmax = ',tbotmax
 
        ! determine tdewmax (see below for use)
-       if (associated(strm_tdew)) then
-          rtmp = maxval(strm_tdew(:))
-          call shr_mpi_max(rtmp, tdewmax, mpicom, 'datm_tdew', all=.true.)
-          if (masterproc) write(logunit,*) trim(subname),' tdewmax = ',tdewmax
-       endif
+       rtmp = maxval(strm_tdew(:))
+       call shr_mpi_max(rtmp, tdewmax, mpicom, 'datm_tdew', all=.true.)
+       if (masterproc) write(logunit,*) trim(subname),' tdewmax = ',tdewmax
 
        ! reset first_time
        first_time = .false.
