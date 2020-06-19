@@ -414,7 +414,7 @@
 	<!-- TODO: generate_mesh_from:$DIN_LOC_ROOT/domains/domain.ocn.01col.SOFS.20150828.nc -->
       </value>
       <value stream="ERA5_HOURLY">
-        $DIN_LOC_ROOT/share/meshes/TL639_200617_ESMFmesh.nc
+        $DIN_LOC_ROOT/share/meshes/TL639_200618_ESMFmesh.nc
       </value>
     </values>
   </entry>
@@ -1828,18 +1828,18 @@
 	$DIN_LOC_ROOT/atm/datm7/topo_forcing/topodata_0.9x1.25_USGS_070110_stream_c151201.nc
       </value>
       <value stream="ERA5_HOURLY">
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.01.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.02.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.03.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.04.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.05.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.06.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.07.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.08.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.09.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.10.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.11.200617.nc
-        /glade/scratch/turuncu/inputdata/atm/datm8/ERA5/ERA5.TL639.2019.12.200617.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.01.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.02.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.03.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.04.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.05.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.06.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.07.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.08.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.09.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.10.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.11.200618.nc
+        $DIN_LOC_ROOT/atm/datm7/ERA5/ERA5.TL639.2019.12.200618.nc
       </value>      
     </values>
   </entry>

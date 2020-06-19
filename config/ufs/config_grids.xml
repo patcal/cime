@@ -122,16 +122,16 @@
 
     <domain name="TL639">
       <nx>1440</nx> <ny>721</ny>
-      <file grid="atm|lnd" mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.lnd.TL639_Atlantic8.200617.nc</file>
-      <file grid="ocnice"  mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.TL639_Atlantic8.200617.nc</file>
-      <mesh driver="nuopc">/glade/scratch/turuncu/inputdata/share/meshes/TL639_200617_ESMFmesh.nc</mesh>
+      <file grid="atm|lnd" mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.lnd.TL639_Atlantic8.200618.nc</file>
+      <file grid="ocnice"  mask="Atlantic8">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.TL639_Atlantic8.200618.nc</file>
+      <mesh driver="nuopc">$DIN_LOC_ROOT/share/meshes/TL639_200618_ESMFmesh.nc</mesh>
       <desc>TL639 grid for ERA5</desc>
     </domain>
 
     <!-- domains for regional ocean (HYCOM) -->
     <domain name="Atlantic8">
       <nx>1135</nx> <ny>633</ny>
-      <file grid="ocnice">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.Atlantic8.2004123.nc</file>
+      <file grid="ocnice">$DIN_LOC_ROOT/hafs/share/domains/domain.ocn.Atlantic8.200618.nc</file>
       <mesh driver="nuopc">$DIN_LOC_ROOT/hafs/share/meshes/Atlantic8_SCRIP_230420_ESMFmesh.nc</mesh>
       <desc>Atlantic8 is a Atlantic grid for Dorian case at 7-8 km HYCOM grid:</desc>
       <support>For regional HYCOM experiments</support>
