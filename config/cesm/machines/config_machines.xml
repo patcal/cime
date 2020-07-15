@@ -1595,7 +1595,7 @@ This allows using a different mpirun command to launch unit tests
     <environment_variables>
       <env name="OMP_STACKSIZE">64M</env>
       <!-- The following is needed in order to run qsub from the compute nodes -->
-      <env name="PATH">$ENV{PATH}:/cluster/torque/bin</env>
+      <env name="PATH">/home/jedwards/cmake-3.18.0/bin:$ENV{PATH}:/cluster/torque/bin</env>
     </environment_variables>
     
     <environment_variables comp_interface="nuopc" mpilib="mvapich2" DEBUG="FALSE">
