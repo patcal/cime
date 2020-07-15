@@ -624,20 +624,20 @@ class NamelistGenerator(object):
                 with open(stream_path, 'a') as stream_file:
                     stream_file.write(stream_file_text)
 
-            # add entries to input data list
-            lines_hash = self._get_input_file_hash(data_list_path)
-            with open(data_list_path, 'a') as input_data_list:
-                string = "mesh = {}\n".format(stream_meshfile)
-                hashValue = hashlib.md5(string.rstrip().encode('utf-8')).hexdigest()
-                if hashValue not in lines_hash:
-                    input_data_list.write(string)
-                for i, filename in enumerate(stream_datafiles.split("\n")):
-                    if filename.strip() == '':
-                        continue
-                    string = "file{:d} = {}\n".format(i+1, filename)
+                # add entries to input data list
+                lines_hash = self._get_input_file_hash(data_list_path)
+                with open(data_list_path, 'a') as input_data_list:
+                    string = "mesh = {}\n".format(stream_meshfile)
                     hashValue = hashlib.md5(string.rstrip().encode('utf-8')).hexdigest()
                     if hashValue not in lines_hash:
                         input_data_list.write(string)
+                    for i, filename in enumerate(stream_datafiles.split("\n")):
+                        if filename.strip() == '':
+                            continue
+                        string = "file{:d} = {}\n".format(i+1, filename)
+                        hashValue = hashlib.md5(string.rstrip().encode('utf-8')).hexdigest()
+                        if hashValue not in lines_hash:
+                            input_data_list.write(string)
         with open(stream_path, 'a') as stream_file:
             stream_file.write("</file>\n")
 
