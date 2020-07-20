@@ -447,6 +447,9 @@ contains
     integer, save :: index_x2r_Faxa_swvdr
     integer, save :: index_x2r_Faxa_swvdf
     integer, save :: index_x2r_Faxa_lwdn
+	
+    integer, save :: index_l2x_coszen_str
+    integer, save :: index_x2r_coszen_str
 
     integer, save :: index_lfrac
     logical, save :: first_time = .true.
@@ -489,6 +492,7 @@ contains
        index_x2r_Flrl_rofsub = mct_aVect_indexRA(x2r_r,'Flrl_rofsub' )
        index_x2r_Flrl_rofdto = mct_aVect_indexRA(x2r_r,'Flrl_rofdto' )
        index_x2r_Flrl_rofi   = mct_aVect_indexRA(x2r_r,'Flrl_rofi' )
+       index_x2r_Flrl_demand = mct_aVect_indexRA(x2r_r,'Flrl_demand' )
        if (have_irrig_field) then
           index_x2r_Flrl_irrig  = mct_aVect_indexRA(x2r_r,'Flrl_irrig' )
        end if
