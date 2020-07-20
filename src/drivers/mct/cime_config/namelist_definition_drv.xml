@@ -696,6 +696,34 @@
      </values>
    </entry>
 
+  <entry id="flux_simple">
+     <type>logical</type>
+     <category>control</category>
+     <group>seq_infodata_inparm</group>
+     <desc>
+      If true, turn on Simple Model computation of atm/ocn fluxes
+      default: false
+     </desc>
+     <values>
+      <value>.false.</value>
+     </values>
+   </entry>
+
+  <entry id="flux_simple_opt">
+     <type>integer</type>
+     <category>control</category>
+     <group>seq_infodata_inparm</group>
+     <desc>
+      If flux_simple is true, set the Simple Model atm/ocn flux option
+         0 = NONE, set all fluxes to 0.
+         1 = Frierson, Implement fluxes according to Frierson.
+      default: 0
+     </desc>
+     <values>
+      <value>0</value>
+     </values>
+   </entry>
+
   <entry id="flux_convergence">
     <type>real</type>
     <category>control</category>
