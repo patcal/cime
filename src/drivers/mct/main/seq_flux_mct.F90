@@ -3,6 +3,7 @@ module seq_flux_mct
   use shr_kind_mod,      only: r8 => shr_kind_r8, in=>shr_kind_in
   use shr_sys_mod,       only: shr_sys_abort
   use shr_flux_mod,      only: shr_flux_atmocn, shr_flux_atmocn_diurnal, shr_flux_adjust_constants
+  use shr_flux_mod,      only: shr_flux_atmocn_frierson
   use shr_orb_mod,       only: shr_orb_params, shr_orb_cosz, shr_orb_decl
   use shr_mct_mod,       only: shr_mct_queryConfigFile, shr_mct_sMatReaddnc
 
@@ -41,6 +42,8 @@ module seq_flux_mct
   real(r8), allocatable ::  uocn (:)  ! ocn velocity, zonal
   real(r8), allocatable ::  vocn (:)  ! ocn velocity, meridional
   real(r8), allocatable ::  tocn (:)  ! ocean temperature
+  real(r8), allocatable ::  psfc (:)  ! surface pressure
+  real(r8), allocatable ::  pbot (:)  ! atm level pressure
   real(r8), allocatable ::  zbot (:)  ! atm level height
   real(r8), allocatable ::  ubot (:)  ! atm velocity, zonal
   real(r8), allocatable ::  vbot (:)  ! atm velocity, meridional
@@ -109,6 +112,8 @@ module seq_flux_mct
 
   ! Coupler field indices
 
+  integer :: index_a2x_Sa_psfc
+  integer :: index_a2x_Sa_pbot
   integer :: index_a2x_Sa_z
   integer :: index_a2x_Sa_u
   integer :: index_a2x_Sa_v
@@ -219,6 +224,12 @@ contains
     nloc = mct_avect_lsize(dom%data)
 
     ! Input fields atm
+    allocate( psfc(nloc),stat=ier)
+    if(ier/=0) call mct_die(subName,'allocate psfc',ier)
+    psfc = 0.0_r8
+    allocate( pbot(nloc),stat=ier)
+    if(ier/=0) call mct_die(subName,'allocate pbot',ier)
+    pbot = 0.0_r8
     allocate( zbot(nloc),stat=ier)
     if(ier/=0) call mct_die(subName,'allocate zbot',ier)
     zbot = 0.0_r8
@@ -913,6 +924,9 @@ contains
     logical     :: flux_diurnal    ! .true. => turn on diurnal cycle in atm/ocn fluxes
     logical     :: cold_start      ! .true. to initialize internal fields in shr_flux diurnal
     character(len=256) :: fldlist  ! subset of xao fields
+
+    logical:: flux_simple      ! .true. => turn on Simple Model atm/ocn fluxes.
+    integer:: flux_simple_opt  ! 1 = caompute Frierson atm/ocn fluxes.
     !
     character(*),parameter :: subName =   '(seq_flux_atmocnexch_mct) '
     !
@@ -937,6 +951,8 @@ contains
          ocn_nx=ocn_nx, ocn_ny=ocn_ny,  &
          ocn_prognostic=ocn_prognostic, &
          flux_diurnal=flux_diurnal,     &
+         flux_simple=flux_simple,         &
+         flux_simple_opt=flux_simple_opt, &
          gust_fac = gust_fac            )
 
     cold_start = .false.   ! use restart data or data from last timestep
@@ -948,6 +964,8 @@ contains
 
     if (dead_comps) then
        do n = 1,nloc_a2o
+          psfc(n) = 101300.0_r8
+          pbot(n) = 101300.0_r8
           tocn(n) = 290.0_r8 ! ocn temperature            ~ Kelvin
           uocn(n) =   0.0_r8 ! ocn velocity, zonal        ~ m/s
           vocn(n) =   0.0_r8 ! ocn velocity, meridional   ~ m/s
@@ -986,6 +1004,8 @@ contains
        do n = 1,nloc_a2o
           io = sMata2o%data%iAttr(ko,n)
           ia = sMata2o%data%iAttr(ka,n)
+          psfc(n) = a2x_e%rAttr(index_a2x_Sa_psfc,ia)
+          pbot(n) = a2x_e%rAttr(index_a2x_Sa_pbot,ia)
           zbot(n) = a2x_e%rAttr(index_a2x_Sa_z   ,ia)
           ubot(n) = a2x_e%rAttr(index_a2x_Sa_u   ,ia)
           vbot(n) = a2x_e%rAttr(index_a2x_Sa_v   ,ia)
@@ -1022,6 +1042,16 @@ contains
             cskin, cskin_night, tod, dt,          &
             duu10n,ustar, re  , ssq , missval = 0.0_r8, &
             cold_start=cold_start)
+    elseif(flux_simple) then
+     if(flux_simple_opt.eq.1) then
+       call shr_flux_atmocn_frierson (nloc_a2o , zbot , ubot, vbot, thbot,  &
+                                      shum , dens , tbot, pbot, uocn, vocn , &
+                                      tocn , psfc , sen , lat , lwup , &
+                                      evap , evap_16O, evap_HDO, evap_18O, taux , tauy, tref, qref , &
+                                      duu10n,ustar, re  , ssq)
+     else ! (flux_simple_opt=0)
+       call mct_die(subName,'Unknown flux_simple_opt=',flux_simple_opt)
+     endif
     else
        call shr_flux_atmocn (nloc_a2o , zbot , ubot, vbot, thbot, prec_gust, gust_fac, &
             shum , shum_16O , shum_HDO, shum_18O, dens , tbot, uocn, vocn , &
@@ -1197,6 +1227,9 @@ contains
     real(r8)    :: flux_convergence ! convergence criteria for imlicit flux computation
     integer(in) :: flux_max_iteration ! maximum number of iterations for convergence
     logical :: coldair_outbreak_mod !  cold air outbreak adjustment  (Mahrt & Sun 1995,MWR)
+
+    logical:: flux_simple      ! .true. => turn on Simple Model atm/ocn fluxes.
+    integer:: flux_simple_opt  ! 1 = caompute Frierson atm/ocn fluxes.
     !
     real(r8),parameter :: albdif = 0.06_r8 ! 60 deg reference albedo, diffuse
     real(r8),parameter :: albdir = 0.07_r8 ! 60 deg reference albedo, direct
@@ -1210,6 +1243,8 @@ contains
          dead_comps=dead_comps, &
          ocn_prognostic=ocn_prognostic, &
          flux_diurnal=flux_diurnal,     &
+         flux_simple=flux_simple,         &
+         flux_simple_opt=flux_simple_opt, &
          gust_fac = gust_fac            )
 
     cold_start = .false.   ! use restart data or data from last timestep
@@ -1260,6 +1295,8 @@ contains
        index_xao_So_windinc_diurn     = mct_aVect_indexRA(xao,'So_windinc_diurn')
        index_xao_So_ninc_diurn        = mct_aVect_indexRA(xao,'So_ninc_diurn')
 
+       index_a2x_Sa_psfc   = mct_aVect_indexRA(a2x,'Sa_pslv')
+       index_a2x_Sa_pbot   = mct_aVect_indexRA(a2x,'Sa_pbot')
        index_a2x_Sa_z      = mct_aVect_indexRA(a2x,'Sa_z')
        index_a2x_Sa_u      = mct_aVect_indexRA(a2x,'Sa_u')
        index_a2x_Sa_v      = mct_aVect_indexRA(a2x,'Sa_v')
@@ -1312,6 +1349,8 @@ contains
           tocn(n) = 290.0_r8 ! ocn temperature            ~ Kelvin
           uocn(n) =   0.0_r8 ! ocn velocity, zonal        ~ m/s
           vocn(n) =   0.0_r8 ! ocn velocity, meridional   ~ m/s
+          psfc(n) = 101300.0_r8
+          pbot(n) = 101300.0_r8
           zbot(n) =  55.0_r8 ! atm height of bottom layer ~ m
           ubot(n) =   0.0_r8 ! atm velocity, zonal        ~ m/s
           vbot(n) =   2.0_r8 ! atm velocity, meridional   ~ m/s
@@ -1359,6 +1398,8 @@ contains
        do n = 1,nloc
           nInc(n) = 0._r8 ! needed for minval/maxval calculation
           if (mask(n) /= 0) then
+             psfc(n) = a2x%rAttr(index_a2x_Sa_psfc,n)
+             pbot(n) = a2x%rAttr(index_a2x_Sa_pbot,n)
              zbot(n) = a2x%rAttr(index_a2x_Sa_z   ,n)
              ubot(n) = a2x%rAttr(index_a2x_Sa_u   ,n)
              vbot(n) = a2x%rAttr(index_a2x_Sa_v   ,n)
@@ -1435,6 +1476,16 @@ contains
                                 !consistent with mrgx2a fraction
                                 !duu10n,ustar, re  , ssq, missval = 0.0_r8 )
             cold_start=cold_start)
+    elseif(flux_simple) then
+     if(flux_simple_opt.eq.1) then
+       call shr_flux_atmocn_frierson (nloc , zbot , ubot, vbot, thbot,  &
+                                      shum , dens , tbot, pbot, uocn, vocn , &
+                                      tocn , psfc , sen , lat , lwup , &
+                                      evap , evap_16O, evap_HDO, evap_18O, taux , tauy, tref, qref , &
+                                      duu10n,ustar, re  , ssq)
+     else ! (flux_simple_opt=0)
+       call mct_die(subName,'Unknown flux_simple_opt=',flux_simple_opt)
+     endif
     else
        call shr_flux_atmocn (nloc , zbot , ubot, vbot, thbot, prec_gust, gust_fac, &
             shum , shum_16O , shum_HDO, shum_18O, dens , tbot, uocn, vocn , &

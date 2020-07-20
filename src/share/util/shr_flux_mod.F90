@@ -31,6 +31,7 @@ module shr_flux_mod
 ! !PUBLIC MEMBER FUNCTIONS:
 
    public :: shr_flux_atmOcn      ! computes atm/ocn fluxes
+   public :: shr_flux_atmOcn_frierson  ! computes atm/ocn fluxes (Frierson Simple Model)
    public :: shr_flux_atmOcn_diurnal   ! computes atm/ocn fluxes with diurnal cycle
    public :: shr_flux_atmIce      ! computes atm/ice fluxes
    public :: shr_flux_MOstability ! boundary layer stability scales/functions
@@ -461,6 +462,259 @@ SUBROUTINE shr_flux_atmOcn(nMax  ,zbot  ,ubot  ,vbot  ,thbot ,  prec_gust, gust_
    ENDDO
 
 END subroutine shr_flux_atmOcn
+
+  !===============================================================================
+  subroutine shr_flux_atmOcn_frierson(nMax    ,zbot ,ubot    ,vbot    ,thbot   , &
+                                      qbot    ,rbot ,tbot    ,pbot    ,us      , &
+                                      vs      ,ts   ,ps      ,sen     ,lat     , &
+                                      lwup    ,evap ,evap_16O,evap_HDO,evap_18O, &
+                                      taux    ,tauy ,tref    ,qref    ,duu10n  , &
+                                      ustar_sv,re_sv,ssq_sv  ,missval            )
+    !
+    ! shr_flux_atmOcn_frierson: simple model atm/ocn flux calculation
+    !
+    ! PURPOSE:
+    !     Computes Simple-physics atm/ocn surface fluxes based on Frierson, et al. 2006. 
+    !
+    !
+    ! NOTES:
+    !   o all fluxes are positive downward
+    !   o net heat flux = net sw + lw up + lw down + sen + lat
+    !   o wind speeds should all be above a minimum speed 
+    !
+    !  real(r8),parameter:: Wind_min = 1.0d-5
+    !  real(r8),parameter:: Z0       = 3.21d-5
+    !  real(r8),parameter:: Ri_c     = 1.0_r8
+    !  real(R8),parameter:: T0       = 273.16_R8
+    !  real(R8),parameter:: E0       = 610.78_R8
+    !  real(R8),parameter:: epsilo   = shr_const_mwwv /shr_const_mwdair
+    !  real(r8),parameter:: cappa    = shr_const_rdair/shr_const_cpdair  ! R/Cp
+    !
+    !==========================================================================
+    !use namelist_utils,only: find_group_name
+    !use units         ,only: getunit, freeunit
+    use shr_nl_mod  ,only: shr_nl_find_group_name
+    use shr_file_mod,only: shr_file_getUnit, shr_file_freeUnit
+    use shr_sys_mod ,only: shr_sys_abort
+    implicit none
+    !
+    ! Tuning Parameters
+    !--------------------
+    real(r8):: Wind_min = 1.0d-5
+    real(r8):: Z0       = 3.21d-5
+    real(r8):: Ri_c     = 1.0_r8
+    real(R8):: T0       = 273.16_R8
+    real(R8):: E0       = 610.78_R8
+    real(R8),parameter:: epsilo   = shr_const_mwwv /shr_const_mwdair
+    real(r8),parameter:: cappa    = shr_const_rdair/shr_const_cpdair  ! R/Cp
+    real(r8),parameter:: ps0      = 1.0e5_R8
+    ! 
+    ! Passed Variables
+    !------------------
+    integer(IN),intent(in) ::       nMax      ! data vector length
+    real(R8)   ,intent(in) :: zbot (nMax)     ! atm level height      (m)
+    real(R8)   ,intent(in) :: ubot (nMax)     ! atm u wind            (m/s)
+    real(R8)   ,intent(in) :: vbot (nMax)     ! atm v wind            (m/s)
+    real(R8)   ,intent(in) :: thbot(nMax)     ! atm potential T       (K)
+    real(R8)   ,intent(in) :: qbot (nMax)     ! atm specific humidity (kg/kg)
+    real(R8)   ,intent(in) :: rbot (nMax)     ! DRY atm air density   (kg/m^3)
+    real(R8)   ,intent(in) :: tbot (nMax)     ! atm T                 (K)
+    real(R8)   ,intent(in) :: pbot (nMax)     ! atm Pressure          (Pa)
+    real(R8)   ,intent(in) :: us   (nMax)     ! ocn u-velocity        (m/s)
+    real(R8)   ,intent(in) :: vs   (nMax)     ! ocn v-velocity        (m/s)
+    real(R8)   ,intent(in) :: ts   (nMax)     ! ocn temperature       (K)
+    real(R8)   ,intent(in) :: ps   (nMax)     ! surface pressure      (Pa)
+
+    real(R8),intent(out)  ::  sen  (nMax)     ! heat flux: sensible    (W/m^2)
+    real(R8),intent(out)  ::  lat  (nMax)     ! heat flux: latent      (W/m^2)
+    real(R8),intent(out)  ::  lwup (nMax)     ! heat flux: lw upward   (W/m^2)
+    real(R8),intent(out)  ::  evap (nMax)     ! water flux: evap  ((kg/s)/m^2)
+    real(R8),intent(out)  ::  evap_16O (nMax) ! water flux: evap ((kg/s/m^2)
+    real(R8),intent(out)  ::  evap_HDO (nMax) ! water flux: evap ((kg/s)/m^2)
+    real(R8),intent(out)  ::  evap_18O (nMax) ! water flux: evap ((kg/s/m^2)
+    real(R8),intent(out)  ::  taux (nMax)     ! surface stress, zonal      (N)
+    real(R8),intent(out)  ::  tauy (nMax)     ! surface stress, maridional (N)
+    real(R8),intent(out)  ::  tref (nMax)     ! diag:  2m ref height T     (K)
+    real(R8),intent(out)  ::  qref (nMax)     ! diag:  2m ref humidity (kg/kg)
+    real(R8),intent(out)  :: duu10n(nMax)     ! diag: 10m wind speed squared (m/s)^2
+
+    real(R8),intent(out),optional :: ustar_sv(nMax) ! diag: ustar
+    real(R8),intent(out),optional :: re_sv   (nMax) ! diag: sqrt of exchange coefficient (water)
+    real(R8),intent(out),optional :: ssq_sv  (nMax) ! diag: sea surface humidity  (kg/kg)
+
+    real(R8),intent(in) ,optional :: missval        ! masked value
+    !
+    ! Local Values
+    !---------------
+    integer(IN) :: n         ! vector loop index
+    integer(IN) :: iter
+    real(R8)    :: vmag      ! surface wind magnitude   (m/s)
+    real(R8)    :: vmag_old  ! surface wind magnitude without gustiness (m/s)
+    real(R8)    :: ssq       ! sea surface humidity     (kg/kg)
+    real(R8)    :: delt      ! potential T difference   (K)
+    real(R8)    :: delq      ! humidity difference      (kg/kg)
+    real(R8)    :: stable    ! stability factor
+    real(R8)    :: rdn       ! sqrt of neutral exchange coeff (momentum)
+    real(R8)    :: rhn       ! sqrt of neutral exchange coeff (heat)
+    real(R8)    :: ren       ! sqrt of neutral exchange coeff (water)
+    real(R8)    :: rd        ! sqrt of exchange coefficient (momentum)
+    real(R8)    :: rh        ! sqrt of exchange coefficient (heat)
+    real(R8)    :: re        ! sqrt of exchange coefficient (water)
+    real(R8)    :: ustar     ! ustar
+    real(r8)    :: ustar_prev
+    real(R8)    :: qstar     ! qstar
+    real(R8)    :: tstar     ! tstar
+    real(R8)    :: hol       ! H (at zbot) over L
+    real(R8)    :: xsq       ! ?
+    real(R8)    :: xqq       ! ?
+    real(R8)    :: psimh     ! stability function at zbot (momentum)
+    real(R8)    :: psixh     ! stability function at zbot (heat and water)
+    real(R8)    :: psix2     ! stability function at ztref reference height
+    real(R8)    :: alz       ! ln(zbot/zref)
+    real(R8)    :: al2       ! ln(zref/ztref)
+    real(R8)    :: u10n      ! 10m neutral wind
+    real(R8)    :: tau       ! stress at zbot
+    real(R8)    :: cp        ! specific heat of moist air
+    real(R8)    :: fac       ! vertical interpolation factor
+    real(R8)    :: spval     ! local missing value
+
+    real(R8):: Rho_bot       ! MOIST atm air density   (kg/m^3)
+    real(R8):: Q_srf,Ws_bot,Tv_bot,Thv_bot,Thv_srf,Ri_bot
+    real(R8):: Th_bot,Th_srf,Cdrag,Cstar
+
+    logical ,save:: first_call          = .true.
+    real(r8),save:: frierson_T0         = 273.16_r8
+    real(r8),save:: frierson_E0         = 610.78_r8
+    real(r8),save:: frierson_Erad       = 6.376d6
+    real(r8),save:: frierson_Wind_min   = 1.0d-5
+    real(r8),save:: frierson_Z0         = 3.21d-5
+    real(r8),save:: frierson_Ri_c       = 1.0_r8
+    real(r8),save:: frierson_Karman     = 0.4_r8
+    real(r8),save:: frierson_Fb         = 0.1_r8
+    real(r8),save:: frierson_Rs0        = 938.4_r8
+    real(r8),save:: frierson_DeltaS     = 1.4_r8
+    real(r8),save:: frierson_Tau_eqtr   = 6.0_r8
+    real(r8),save:: frierson_Tau_pole   = 1.5_r8
+    real(r8),save:: frierson_LinFrac    = 0.1_r8
+    real(r8),save:: frierson_Boltz      = 5.6734d-8
+    real(R8),save:: frierson_C0         = 1.e7_R8
+    real(R8),save:: frierson_Tmin       = 271._R8
+    real(R8),save:: frierson_Tdlt       = 39._R8
+    real(R8),save:: frierson_Twidth     = 26._R8
+    real(R8),save:: frierson_WetDryCoef = 1._R8
+
+    namelist /frierson_nl/ frierson_T0 , frierson_E0    , frierson_Erad    , frierson_Wind_min, &
+                           frierson_Z0 , frierson_Ri_c  , frierson_Karman  , frierson_Fb      , &
+                           frierson_Rs0, frierson_DeltaS, frierson_Tau_eqtr, frierson_Tau_pole, &
+                           frierson_C0 , frierson_Tmin  , frierson_Tdlt    , frierson_Twidth  , &
+                           frierson_LinFrac, frierson_Boltz, frierson_WetDryCoef
+    integer:: ierr,unitn
+
+    ! formats 
+    !---------------
+    character(*),parameter :: subName = '(shr_flux_atmOcn_frierson) '
+    character(*),parameter ::   F00 = "('(shr_flux_atmOcn_frierson) ',4a)"
+
+
+    ! First time thru: read in tuning parameters
+    !--------------------------------------------------------------------
+    if(first_call) then
+      unitn = shr_file_getUnit()
+      open(unitn,file='atm_in',status='old')
+      call shr_nl_find_group_name(unitn,'frierson_nl',status=ierr)
+      if(ierr.eq.0) then
+        read(unitn,frierson_nl,iostat=ierr)
+        if(ierr.ne.0) then
+          call shr_sys_abort('shr_flux_atmOcn_frierson:: ERROR reading frierson_nl namelist')
+        endif
+      endif
+      close(unitn)
+      call shr_file_freeUnit(unitn)
+
+      Wind_min = frierson_Wind_min
+      Z0       = frierson_Z0
+      Ri_c     = frierson_Ri_c
+      T0       = frierson_T0
+      E0       = frierson_E0*frierson_WetDryCoef
+
+      write(s_logunit,*) ' '
+      write(s_logunit,*) '--------------------------------------------------------------'
+      write(s_logunit,*) ' shr_flux_atmOcn_frierson: INITIALIZED WITH FRIERSON SETTINGS '
+      write(s_logunit,*) '--------------------------------------------------------------'
+      write(s_logunit,*) 'FRIERSON: T0='        , frierson_T0
+      write(s_logunit,*) 'FRIERSON: E0='        , frierson_E0
+      write(s_logunit,*) 'FRIERSON: Wind_min='  , frierson_Wind_min
+      write(s_logunit,*) 'FRIERSON: Z0='        , frierson_Z0
+      write(s_logunit,*) 'FRIERSON: Ri_c='      , frierson_Ri_c
+      write(s_logunit,*) 'FRIERSON: WetDryCoef=', frierson_WetDryCoef
+      write(s_logunit,*) ' '
+      first_call = .false.
+    endif
+
+    ! Some Preliminaries.
+    !--------------------
+    if(present(missval)) then
+      spval = missval
+    else
+      spval = shr_const_spval
+    endif
+    u10n  = spval
+    rh    = spval
+    psixh = spval
+    hol   = spval
+
+    ! Calculate drag coef 
+    !---------------------------------------
+    do n=1,nMax
+      Tv_bot  = tbot(n)*(1._R8+loc_zvir*qbot(n))
+      Rho_bot = pbot(n)/(shr_const_rdair*Tv_bot)
+      Ws_bot  = sqrt(ubot(n)**2 + vbot(n)**2 + Wind_min)
+      Thv_bot = Tv_bot*((ps0/pbot(n))**cappa)
+      Q_srf   = epsilo*E0/ps(n)*exp(-loc_latvap/shr_const_rwv*((1._R8/ts(n))-1._R8/T0))
+      Thv_srf = ts  (n)*(1._R8+loc_zvir*Q_srf) *((ps0/ps  (n))**cappa)
+      Ri_bot  = (loc_g*zbot(n)/(Ws_bot**2))*(Thv_bot-Thv_srf)/Thv_srf
+      if(Ri_bot.le.0._R8) then
+        Cdrag = (loc_karman/log((zbot(n)/Z0)))**2
+      elseif(Ri_bot.ge.Ri_c) then
+        Cdrag = 0.0_R8
+      else
+        Cdrag = ((1._R8-(Ri_bot/Ri_c))*loc_karman/log((zbot(n)/Z0)))**2
+      endif
+      Cstar = Rho_bot*Cdrag*Ws_bot
+
+      ! For SOM, fluxes are required to be positive-downward.
+      !-------------------------------------------------------
+      Th_bot  = tbot(n)*((ps0/pbot(n))**cappa)
+      Th_srf  = ts  (n)*((ps0/ps  (n))**cappa)
+      sen (n) = -loc_cpdair*Cstar*(Th_srf - Th_bot )
+      lat (n) = -loc_latvap*Cstar*( Q_srf - qbot(n))
+      evap(n) =            -Cstar*( Q_srf - qbot(n))
+      taux(n) =            -Cstar*( us(n) - ubot(n))
+      tauy(n) =            -Cstar*( vs(n) - vbot(n))
+      lwup(n) = -loc_stebol * ts(n)**4
+
+      evap_16O(n) = spval  ! water tracer flux (kg/s)/m^2)
+      evap_HDO(n) = spval  ! HDO tracer flux  (kg/s)/m^2)
+      evap_18O(n) = spval  ! H218O tracer flux (kg/s)/m^2)
+      tref    (n) = spval  ! 2m reference height temperature (K)
+      qref    (n) = spval  ! 2m reference height humidity (kg/kg)
+      duu10n  (n) = spval  ! 10m wind speed squared (m/s)^2
+
+      !------------------------------------------------------------
+      ! compute diagnositcs: 2m ref T & Q, 10m wind speed squared
+      !------------------------------------------------------------
+      duu10n(n) = u10n*u10n ! 10m wind speed squared
+
+      if (present(ustar_sv)) ustar_sv(n) = spval
+      if (present(re_sv   )) re_sv   (n) = Cdrag   ! re
+      if (present(ssq_sv  )) ssq_sv  (n) = Q_srf   ! ssq
+    end do
+
+    ! End Routine
+    !---------------
+    return
+  end subroutine shr_flux_atmOcn_frierson
+  !===============================================================================
 
 real(R8) elemental function cuberoot(a)
   real(R8), intent(in) :: a

@@ -72,6 +72,7 @@ module docn_comp_mod
   real(R8), pointer      :: tfreeze(:)
   integer(IN), pointer   :: imask(:)
   real(R8), pointer      :: xc(:), yc(:) ! arryas of model latitudes and longitudes
+  real(R8), pointer      :: swnet(:)
 
   !--------------------------------------------------------------------------
   integer(IN)     , parameter :: ktrans = 8
@@ -258,6 +259,7 @@ CONTAINS
     allocate(imask(lsize))
     allocate(xc(lsize))
     allocate(yc(lsize))
+    allocate(swnet(lsize))
 
     kmask = mct_aVect_indexRA(ggrid%data,'mask')
     imask(:) = nint(ggrid%data%rAttr(kmask,:))
@@ -315,7 +317,7 @@ CONTAINS
        call shr_mpi_bcast(exists,mpicom,'exists')
        call shr_mpi_bcast(exists1,mpicom,'exists1')
 
-       if (trim(datamode) == 'SOM' .or. trim(datamode) == 'SOM_AQUAP') then
+       if (trim(datamode) == 'SOM' .or. trim(datamode) == 'SIMPLESOM' .or. trim(datamode) == 'SOM_AQUAP') then
        if (exists1) then
           if (my_task == master_task) write(logunit,F00) ' reading ',trim(rest_file)
           call shr_pcdf_readwrite('read',SDOCN%pio_subsystem, SDOCN%io_type, &
@@ -370,6 +372,11 @@ CONTAINS
        target_ymd, target_tod, case_name)
 
     ! !DESCRIPTION:  run method for docn model
+    !---------------------------------------------------
+    use shr_nl_mod  ,only: shr_nl_find_group_name
+    use shr_file_mod,only: shr_file_getUnit, shr_file_freeUnit
+    use shr_sys_mod ,only: shr_sys_abort
+
     implicit none
 
     ! !INPUT/OUTPUT PARAMETERS:
@@ -410,6 +417,33 @@ CONTAINS
     character(*), parameter :: F01   = "('(docn_comp_run) ',a, i7,2x,i5,2x,i5,2x,d21.14)"
     character(*), parameter :: F04   = "('(docn_comp_run) ',2a,2i8,'s')"
     character(*), parameter :: subName = "(docn_comp_run) "
+
+    real(R8),save:: frierson_T0         = 273.16_r8
+    real(R8),save:: frierson_E0         = 610.78_r8
+    real(R8),save:: frierson_Erad       = 6.376d6
+    real(R8),save:: frierson_Wind_min   = 1.0d-5
+    real(R8),save:: frierson_Z0         = 3.21d-5
+    real(R8),save:: frierson_Ri_c       = 1.0_r8
+    real(R8),save:: frierson_Karman     = 0.4_r8
+    real(R8),save:: frierson_Fb         = 0.1_r8
+    real(R8),save:: frierson_Rs0        = 938.4_r8
+    real(R8),save:: frierson_DeltaS     = 1.4_r8
+    real(R8),save:: frierson_Tau_eqtr   = 6.0_r8
+    real(R8),save:: frierson_Tau_pole   = 1.5_r8
+    real(R8),save:: frierson_LinFrac    = 0.1_r8
+    real(R8),save:: frierson_Boltz      = 5.6734d-8
+    real(R8),save:: frierson_C0         = 1.e7_R8
+    real(R8),save:: frierson_Tmin       = 271._R8
+    real(R8),save:: frierson_Tdlt       = 39._R8
+    real(R8),save:: frierson_Twidth     = 26._R8
+    real(R8),save:: frierson_WetDryCoef = 1._R8
+    integer:: ierr,unitn
+
+    namelist /frierson_nl/ frierson_T0 , frierson_E0    , frierson_Erad    , frierson_Wind_min, &
+                           frierson_Z0 , frierson_Ri_c  , frierson_Karman  , frierson_Fb      , &
+                           frierson_Rs0, frierson_DeltaS, frierson_Tau_eqtr, frierson_Tau_pole, &
+                           frierson_C0 , frierson_Tmin  , frierson_Tdlt    , frierson_Twidth  , &
+                           frierson_LinFrac, frierson_Boltz, frierson_WetDryCoef
     !-------------------------------------------------------------------------------
 
     call t_startf('DOCN_RUN')
@@ -574,6 +608,80 @@ CONTAINS
           enddo
        endif   ! firstcall
 
+    case('SIMPLESOM')
+       lsize = mct_avect_lsize(o2x)
+!---------------------------------------------------
+!TODO:  Use T STREAM Data loaded with TS values to apply SOM NUDGING
+!NUDGING       do n = 1,SDOCN%nstreams
+!NUDGING          call shr_dmodel_translateAV(SDOCN%avs(n),avstrm,avifld,avofld,rearr)
+!NUDGING       enddo
+!---------------------------------------------------
+       if(firstcall) then
+
+         ! Read in Frierson namelist parameters
+         !--------------------------------------
+         unitn = shr_file_getUnit()
+         open(unitn,file='atm_in',status='old')
+         call shr_nl_find_group_name(unitn,'frierson_nl',status=ierr)
+         if(ierr.eq.0) then
+           read(unitn,frierson_nl,iostat=ierr)
+           if(ierr.ne.0) then
+             call shr_sys_abort('docn_comp_run:: ERROR reading frierson_nl namelist')
+           endif
+         endif
+         close(unitn)
+         call shr_file_freeUnit(unitn)
+         write(logunit,*) ' '
+         write(logunit,*) '--------------------------------------------------------------'
+         write(logunit,*) ' docn_comp_run: INITIALIZED WITH FRIERSON SETTINGS '
+         write(logunit,*) '--------------------------------------------------------------'
+         write(logunit,*) 'FRIERSON: Rs0='     , frierson_Rs0
+         write(logunit,*) 'FRIERSON: DeltaS='  , frierson_DeltaS
+         write(logunit,*) 'FRIERSON: Wind_min=', frierson_Wind_min
+         write(logunit,*) 'FRIERSON: C0='      , frierson_C0
+         write(logunit,*) 'FRIERSON: Tmin='    , frierson_Tmin
+         write(logunit,*) 'FRIERSON: Tdlt='    , frierson_Tdlt
+         write(logunit,*) 'FRIERSON: Twidth='  , frierson_Twidth
+         write(logunit,*) ' '
+
+         ! Initialize Surface temperatures, and SW forcing
+         !
+         !     Passing a simple swnet for a simple applied albdo thru 
+         !     the coupler from gray radiation routine is a nightmare, 
+         !     a pooly documented nightmare......
+         !     I gave up and hard-wired the SW flux here for now.
+         !--------------------------------------------------------
+         do n = 1,lsize
+           if(.not. read_restart) then
+             somtp(n) = frierson_Tmin + frierson_Tdlt*exp(-0.5_R8*(yc(n)/frierson_Twidth)**2)
+           endif
+           o2x%rAttr(kt,n) = somtp(n)
+           o2x%rAttr(kq,n) = 0.0_R8
+           swnet(n) = (frierson_Rs0/4.d0)*(1._r8 + frierson_DeltaS*(1._r8 - 3._r8*((sin(yc(n)*SHR_CONST_PI/180._R8))**2))/4._r8)
+           x2o%rAttr(kswnet,n) = swnet(n)
+         end do
+       else
+         do n = 1,lsize
+           if(imask(n) /= 0) then
+             x2o%rAttr(kswnet,n) = swnet(n)
+             o2x%rAttr(kt    ,n) = somtp(n) + (dt/frierson_C0)*( x2o%rAttr(kswnet,n) &  ! shortwave
+                                                                +x2o%rAttr(klwup ,n) &  ! longwave
+                                                                +x2o%rAttr(klwdn ,n) &  ! longwave
+                                                                +x2o%rAttr(ksen  ,n) &  ! sensible
+                                                                +x2o%rAttr(klat  ,n) )  ! latent
+!--------------------------------------------------------------
+!TODO:  apply NUDGING from current temp toward the stream temp
+!
+!NUDGING     Frierson_SOMnudging = 0._r8
+!NUDGING     if(Frierson_SOMnudging .gt.0._r8) then
+!NUDGING       o2x%rAttr(kt,n) = o2x%rAttr(kt,n)    &
+!NUDGING                       + Frierson_SOMnudging*(avstrm%rAttr(?? ,n) - o2x%rAttr(kt,n))
+!NUDGING     endif
+!-------------------------------------------------------------
+           endif
+         end do
+       endif   ! firstcall
+
     case('SOM_AQUAP')
        lsize = mct_avect_lsize(o2x)
        do n = 1,SDOCN%nstreams
@@ -658,7 +766,7 @@ CONTAINS
           close(nu)
           call shr_file_freeUnit(nu)
        endif
-       if (trim(datamode) == 'SOM' .or. trim(datamode) == 'SOM_AQUAP') then
+       if (trim(datamode) == 'SOM' .or. trim(datamode) == 'SIMPLESOM' .or. trim(datamode) == 'SOM_AQUAP') then
           if (my_task == master_task) write(logunit,F04) ' writing ',trim(rest_file),target_ymd,target_tod
           call shr_pcdf_readwrite('write', SDOCN%pio_subsystem, SDOCN%io_type,&
                trim(rest_file), mpicom, gsmap, clobber=.true., rf1=somtp,rf1n='somtp')
