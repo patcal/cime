@@ -678,6 +678,7 @@ CONTAINS
 !NUDGING                       + Frierson_SOMnudging*(avstrm%rAttr(?? ,n) - o2x%rAttr(kt,n))
 !NUDGING     endif
 !-------------------------------------------------------------
+             somtp(n) = o2x%rAttr(kt    ,n) ! save temp
            endif
          end do
        endif   ! firstcall
