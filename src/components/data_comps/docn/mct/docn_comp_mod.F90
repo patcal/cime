@@ -418,26 +418,28 @@ CONTAINS
     character(*), parameter :: F04   = "('(docn_comp_run) ',2a,2i8,'s')"
     character(*), parameter :: subName = "(docn_comp_run) "
 
-    real(R8),save:: frierson_T0         = 273.16_r8
-    real(R8),save:: frierson_E0         = 610.78_r8
-    real(R8),save:: frierson_Erad       = 6.376d6
-    real(R8),save:: frierson_Wind_min   = 1.0d-5
-    real(R8),save:: frierson_Z0         = 3.21d-5
-    real(R8),save:: frierson_Ri_c       = 1.0_r8
-    real(R8),save:: frierson_Karman     = 0.4_r8
-    real(R8),save:: frierson_Fb         = 0.1_r8
-    real(R8),save:: frierson_Rs0        = 938.4_r8
-    real(R8),save:: frierson_DeltaS     = 1.4_r8
-    real(R8),save:: frierson_Tau_eqtr   = 6.0_r8
-    real(R8),save:: frierson_Tau_pole   = 1.5_r8
-    real(R8),save:: frierson_LinFrac    = 0.1_r8
-    real(R8),save:: frierson_Boltz      = 5.6734d-8
-    real(R8),save:: frierson_C0         = 1.e7_R8
-    real(R8),save:: frierson_Tmin       = 271._R8
-    real(R8),save:: frierson_Tdlt       = 39._R8
-    real(R8),save:: frierson_Twidth     = 26._R8
-    real(R8),save:: frierson_WetDryCoef = 1._R8
+    real(R8),save:: frierson_T0
+    real(R8),save:: frierson_E0
+    real(R8),save:: frierson_Erad
+    real(R8),save:: frierson_Wind_min
+    real(R8),save:: frierson_Z0
+    real(R8),save:: frierson_Ri_c
+    real(R8),save:: frierson_Karman
+    real(R8),save:: frierson_Fb
+    real(R8),save:: frierson_Rs0
+    real(R8),save:: frierson_DeltaS
+    real(R8),save:: frierson_Tau_eqtr
+    real(R8),save:: frierson_Tau_pole
+    real(R8),save:: frierson_LinFrac
+    real(R8),save:: frierson_Boltz
+    real(R8),save:: frierson_C0
+    real(R8),save:: frierson_Tmin
+    real(R8),save:: frierson_Tdlt
+    real(R8),save:: frierson_Twidth
+    real(R8),save:: frierson_WetDryCoef
     integer:: ierr,unitn
+
+    ! CACQUESTION - There should be a better way to get/use the frierson namelist settings.
 
     namelist /frierson_nl/ frierson_T0 , frierson_E0    , frierson_Erad    , frierson_Wind_min, &
                            frierson_Z0 , frierson_Ri_c  , frierson_Karman  , frierson_Fb      , &
@@ -631,6 +633,7 @@ CONTAINS
          endif
          close(unitn)
          call shr_file_freeUnit(unitn)
+         if (my_task == master_task) then
          write(logunit,*) ' '
          write(logunit,*) '--------------------------------------------------------------'
          write(logunit,*) ' docn_comp_run: INITIALIZED WITH FRIERSON SETTINGS '
@@ -643,6 +646,7 @@ CONTAINS
          write(logunit,*) 'FRIERSON: Tdlt='    , frierson_Tdlt
          write(logunit,*) 'FRIERSON: Twidth='  , frierson_Twidth
          write(logunit,*) ' '
+         end if
 
          ! Initialize Surface temperatures, and SW forcing
          !
