@@ -500,11 +500,11 @@ END subroutine shr_flux_atmOcn
     !
     ! Tuning Parameters
     !--------------------
-    real(r8):: Wind_min = 1.0d-5
-    real(r8):: Z0       = 3.21d-5
-    real(r8):: Ri_c     = 1.0_r8
-    real(R8):: T0       = 273.16_R8
-    real(R8):: E0       = 610.78_R8
+    real(r8), save:: Wind_min
+    real(r8), save:: Z0
+    real(r8), save:: Ri_c
+    real(R8), save:: T0
+    real(R8), save:: E0
     real(R8),parameter:: epsilo   = shr_const_mwwv /shr_const_mwdair
     real(r8),parameter:: cappa    = shr_const_rdair/shr_const_cpdair  ! R/Cp
     real(r8),parameter:: ps0      = 1.0e5_R8
@@ -583,25 +583,25 @@ END subroutine shr_flux_atmOcn
     real(R8):: Th_bot,Th_srf,Cdrag,Cstar
 
     logical ,save:: first_call          = .true.
-    real(r8),save:: frierson_T0         = 273.16_r8
-    real(r8),save:: frierson_E0         = 610.78_r8
-    real(r8),save:: frierson_Erad       = 6.376d6
-    real(r8),save:: frierson_Wind_min   = 1.0d-5
-    real(r8),save:: frierson_Z0         = 3.21d-5
-    real(r8),save:: frierson_Ri_c       = 1.0_r8
-    real(r8),save:: frierson_Karman     = 0.4_r8
-    real(r8),save:: frierson_Fb         = 0.1_r8
-    real(r8),save:: frierson_Rs0        = 938.4_r8
-    real(r8),save:: frierson_DeltaS     = 1.4_r8
-    real(r8),save:: frierson_Tau_eqtr   = 6.0_r8
-    real(r8),save:: frierson_Tau_pole   = 1.5_r8
-    real(r8),save:: frierson_LinFrac    = 0.1_r8
-    real(r8),save:: frierson_Boltz      = 5.6734d-8
-    real(R8),save:: frierson_C0         = 1.e7_R8
-    real(R8),save:: frierson_Tmin       = 271._R8
-    real(R8),save:: frierson_Tdlt       = 39._R8
-    real(R8),save:: frierson_Twidth     = 26._R8
-    real(R8),save:: frierson_WetDryCoef = 1._R8
+    real(r8):: frierson_T0
+    real(r8):: frierson_E0
+    real(r8):: frierson_Erad
+    real(r8):: frierson_Wind_min
+    real(r8):: frierson_Z0
+    real(r8):: frierson_Ri_c
+    real(r8):: frierson_Karman
+    real(r8):: frierson_Fb
+    real(r8):: frierson_Rs0
+    real(r8):: frierson_DeltaS
+    real(r8):: frierson_Tau_eqtr
+    real(r8):: frierson_Tau_pole
+    real(r8):: frierson_LinFrac
+    real(r8):: frierson_Boltz
+    real(R8):: frierson_C0
+    real(R8):: frierson_Tmin
+    real(R8):: frierson_Tdlt
+    real(R8):: frierson_Twidth
+    real(R8):: frierson_WetDryCoef
 
     namelist /frierson_nl/ frierson_T0 , frierson_E0    , frierson_Erad    , frierson_Wind_min, &
                            frierson_Z0 , frierson_Ri_c  , frierson_Karman  , frierson_Fb      , &
